@@ -23,7 +23,7 @@ jobs:
       - name: Create Debian rootfs
         run: |
           mkdir -p rootfs
-          sudo debootstrap --arch=arm64 bookworm rootfs http://deb.debian.org/debian
+          sudo debootstrap --arch=arm64 trixie rootfs http://deb.debian.org/debian
           sudo cp /usr/bin/qemu-aarch64-static rootfs/usr/bin/
 
       - name: Configure rootfs
