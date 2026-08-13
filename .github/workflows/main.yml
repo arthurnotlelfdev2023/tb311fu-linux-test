@@ -1,0 +1,48 @@
+name: Build Debian RootFS for TB311FU
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-rootfs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+
+      - name: Set up environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static debootstrap e2fsprogs \
+            git wget curl unzip xz-utils
+
+      - name: Create Debian rootfs
+        run: |
+          mkdir -p rootfs
+          sudo debootstrap --arch=arm64 bookworm rootfs http://deb.debian.org/debian
+          sudo cp /usr/bin/qemu-aarch64-static rootfs/usr/bin/
+
+      - name: Configure rootfs
+        run: |
+          echo "deb http://deb.debian.org/debian bookworm main contrib non-free" | sudo tee rootfs/etc/apt/sources.list
+          sudo chroot rootfs apt-get update
+          sudo chroot rootfs apt-get install -y ssh net-tools iproute2 systemd
+
+      - name: Package rootfs image
+        run: |
+          dd if=/dev/zero of=debian-rootfs.img bs=1M count=2048
+          mkfs.ext4 debian-rootfs.img
+          mkdir -p mnt
+          sudo mount -o loop debian-rootfs.img mnt
+          sudo cp -a rootfs/* mnt/
+          sudo umount mnt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: debian-rootfs-tb311fu
+          path: debian-rootfs.img
