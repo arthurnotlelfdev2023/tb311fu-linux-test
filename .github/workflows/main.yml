@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-rootfs-x86:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout source
         uses: actions/checkout@v3
